@@ -1,6 +1,6 @@
 use node_template_runtime::{
-	AccountId, AuraConfig, BalancesConfig, GrandpaConfig, RuntimeGenesisConfig, Signature,
-	SudoConfig, SystemConfig, WASM_BINARY,
+	access_control, AccessControlConfig, AccountId, AuraConfig, BalancesConfig, GenesisConfig,
+	GrandpaConfig, Signature, SudoConfig, SystemConfig, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -131,8 +131,36 @@ fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
-) -> RuntimeGenesisConfig {
-	RuntimeGenesisConfig {
+) -> GenesisConfig {
+	let authorized_accounts = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
+
+	// Create initial access controls including the AccessControl Pallet
+	let actions = vec![
+		// Create both Execute and Manage controls for the AccessControl Pallets
+		// `create_access_control` extrinsic.
+		access_control::Action {
+			pallet: "AccessControl".as_bytes().to_vec(),
+			extrinsic: "create_access_control".as_bytes().to_vec(),
+			permission: access_control::Permission::Execute,
+		},
+		access_control::Action {
+			pallet: "AccessControl".as_bytes().to_vec(),
+			extrinsic: "create_access_control".as_bytes().to_vec(),
+			permission: access_control::Permission::Manage,
+		},
+		// ... additional Actions ...
+	];
+
+	// Create the AccessControl struct for access controls and accounts who can action.
+	let access_controls: Vec<access_control::AccessControl<AccountId>> = actions
+		.iter()
+		.map(|action| access_control::AccessControl {
+			action: action.clone(),
+			accounts: authorized_accounts.clone(),
+		})
+		.collect::<Vec<_>>();
+
+	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
 			code: wasm_binary.to_vec(),
@@ -154,5 +182,9 @@ fn testnet_genesis(
 			key: Some(root_key),
 		},
 		transaction_payment: Default::default(),
+		access_control: AccessControlConfig {
+			admins: authorized_accounts.clone(),
+			access_controls,
+		},
 	}
 }
