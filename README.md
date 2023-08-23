@@ -30,7 +30,7 @@ This serves as a working example of [rbac-pallet](https://github.com/ozgunozerk/
     2021-11-03 15:32:15 〽️ Prometheus exporter started at 127.0.0.1:9615
     2021-11-03 15:32:15 Listening for new connections on 127.0.0.1:9945.
     2021-11-03 15:32:20 💤 Idle (0 peers), best: #0 (0x6c78…37de), finalized #0 (0x6c78…37de), ⬇ 0 ⬆ 0
-  ```
+   ```
 2. open a browser and go to this location: https://polkadot.js.org/apps/?rpc=ws://127.0.0.1:9944#/explorer (this is connecting to your local dev net)
 3. go to `Developer` -> `Extrinsics`
 4. select Bob as the account
