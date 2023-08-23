@@ -6,7 +6,11 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use pallet_grandpa::AuthorityId as GrandpaId;
+use access_control::traits::VerifyAccess;
+use frame_system::EnsureRoot;
+use pallet_grandpa::{
+	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
+};
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -22,6 +26,8 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+
+pub use access_control;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -268,10 +274,30 @@ impl pallet_sudo::Config for Runtime {
 	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
+pub struct A();
+impl VerifyAccess<AccountId> for A {
+	fn accessors(pallet: Vec<u8>, extrinsic: Vec<u8>) -> Option<Vec<AccountId>> {
+		None
+	}
+
+	fn verify_execute_access(
+		account_id: AccountId,
+		pallet: Vec<u8>,
+		extrinsic: Vec<u8>,
+	) -> Result<(), access_control::traits::TraitError> {
+		Ok(())
+	}
+}
+
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
+	type VerifyAccess = A;
+}
+
+impl access_control::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -286,6 +312,7 @@ construct_runtime!(
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-template in the runtime.
 		TemplateModule: pallet_template,
+		AccessControl: access_control,
 	}
 );
 
@@ -305,6 +332,7 @@ pub type SignedExtra = (
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	// access_control::Authorize<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
