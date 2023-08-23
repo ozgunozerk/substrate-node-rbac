@@ -16,6 +16,7 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use access_control::traits::VerifyAccess;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -28,6 +29,9 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// Add VerifyAccess trait to the pallet.
+		type VerifyAccess: VerifyAccess<Self::AccountId>;
 	}
 
 	// The pallet's runtime storage items.
@@ -72,13 +76,22 @@ pub mod pallet {
 			// https://docs.substrate.io/main-docs/build/origins/
 			let who = ensure_signed(origin)?;
 
-			// Update storage.
-			<Something<T>>::put(something);
+			match T::VerifyAccess::verify_execute_access(
+				who.clone(),
+				"MyCustomPallet".as_bytes().to_vec(),
+				"do_something".as_bytes().to_vec(),
+			) {
+				Ok(_) => {
+					// Update storage.
+					<Something<T>>::put(something);
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored { something, who });
-			// Return a successful DispatchResultWithPostInfo
-			Ok(())
+					// Emit an event.
+					Self::deposit_event(Event::SomethingStored { something, who });
+					// Return a successful DispatchResultWithPostInfo
+					Ok(())
+				},
+				Err(_) => return Err(frame_support::error::BadOrigin.into()),
+			}
 		}
 
 		/// An example dispatchable that may throw a custom error.
