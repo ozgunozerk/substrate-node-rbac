@@ -15,6 +15,7 @@ dependencies = [
 [[package]]
 name = "access-control"
 version = "0.1.1"
+source = "git+https://github.com/ozgunozerk/RBAC-pallet#94aaac6ade4d4f510967b1ef3be290323494d98e"
 dependencies = [
  "frame-support",
  "frame-system",

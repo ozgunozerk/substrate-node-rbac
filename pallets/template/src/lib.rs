@@ -78,7 +78,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 
 			match T::VerifyAccess::verify_execute_access(
-				who.clone(),
+				&who,
 				"MyCustomPallet".as_bytes().to_vec(),
 				"do_something".as_bytes().to_vec(),
 			) {
