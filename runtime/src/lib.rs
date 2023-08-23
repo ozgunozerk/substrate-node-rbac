@@ -6,7 +6,6 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use access_control::traits::VerifyAccess;
 use frame_system::EnsureRoot;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -279,25 +278,12 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-pub struct A();
-impl VerifyAccess<AccountId> for A {
-	fn accessors(pallet: Vec<u8>, extrinsic: Vec<u8>) -> Option<Vec<AccountId>> {
-		None
-	}
-
-	fn verify_execute_access(
-		account_id: AccountId,
-		pallet: Vec<u8>,
-		extrinsic: Vec<u8>,
-	) -> Result<(), access_control::traits::TraitError> {
-		Ok(())
-	}
-}
-
 /// Configure the pallet-template in pallets/template.
 impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type VerifyAccess = A;
+
+	// add this line
+	type VerifyAccess = AccessControl;
 }
 
 impl access_control::Config for Runtime {
