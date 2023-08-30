@@ -4,7 +4,7 @@ use node_template_runtime::{
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{bounded_vec, sr25519, Pair, Public};
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
@@ -132,33 +132,23 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
 ) -> GenesisConfig {
-	let authorized_accounts = vec![get_account_id_from_seed::<sr25519::Public>("Alice")];
+	let admin_account = get_account_id_from_seed::<sr25519::Public>("Alice");
 
 	// Create initial access controls including the AccessControl Pallet
-	let actions = vec![
-		// Create both Execute and Manage controls for the AccessControl Pallets
-		// `create_access_control` extrinsic.
-		access_control::Action {
-			pallet: "AccessControl".as_bytes().to_vec(),
-			extrinsic: "create_access_control".as_bytes().to_vec(),
-			permission: access_control::Permission::Execute,
-		},
-		access_control::Action {
-			pallet: "AccessControl".as_bytes().to_vec(),
-			extrinsic: "create_access_control".as_bytes().to_vec(),
-			permission: access_control::Permission::Manage,
-		},
-		// ... additional Actions ...
-	];
 
-	// Create the AccessControl struct for access controls and accounts who can action.
-	let access_controls: Vec<access_control::AccessControl<AccountId>> = actions
-		.iter()
-		.map(|action| access_control::AccessControl {
-			action: action.clone(),
-			accounts: authorized_accounts.clone(),
-		})
-		.collect::<Vec<_>>();
+	// Create both Execute and Manage controls for the AccessControl Pallets
+	// `create_access_control` extrinsic.
+	let execute_action = access_control::Action {
+		pallet: "AccessControl".as_bytes().to_vec(),
+		extrinsic: "create_access_control".as_bytes().to_vec(),
+		permission: access_control::Permission::Execute,
+	};
+	let manage_action = access_control::Action {
+		pallet: "AccessControl".as_bytes().to_vec(),
+		extrinsic: "create_access_control".as_bytes().to_vec(),
+		permission: access_control::Permission::Manage,
+	};
+	// ... additional Actions ...
 
 	GenesisConfig {
 		system: SystemConfig {
@@ -181,8 +171,17 @@ fn testnet_genesis(
 		},
 		transaction_payment: Default::default(),
 		access_control: AccessControlConfig {
-			admins: authorized_accounts.clone(),
-			access_controls,
+			admins: bounded_vec![admin_account.clone()],
+			access_controls: bounded_vec![
+				access_control::AccessControl {
+					action: execute_action,
+					accounts: vec![admin_account.clone()],
+				},
+				access_control::AccessControl {
+					action: manage_action,
+					accounts: vec![admin_account],
+				},
+			],
 		},
 	}
 }

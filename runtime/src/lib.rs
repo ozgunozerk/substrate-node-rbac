@@ -12,7 +12,7 @@ use pallet_grandpa::{
 };
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{crypto::KeyTypeId, Get, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
@@ -286,9 +286,33 @@ impl pallet_template::Config for Runtime {
 	type VerifyAccess = AccessControl;
 }
 
+pub struct MaxAdmins;
+impl Get<u32> for MaxAdmins {
+	fn get() -> u32 {
+		2
+	}
+}
+
+pub struct MaxControls;
+impl Get<u32> for MaxControls {
+	fn get() -> u32 {
+		4
+	}
+}
+
+pub struct MaxAccounts;
+impl Get<u32> for MaxAccounts {
+	fn get() -> u32 {
+		4
+	}
+}
+
 impl access_control::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AdminOrigin = EnsureRoot<AccountId>;
+	type MaxAccountsPerAction = MaxAccounts;
+	type MaxAdmins = MaxAdmins;
+	type MaxControls = MaxControls;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
