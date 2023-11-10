@@ -1,6 +1,6 @@
 # Substrate Node Template
 
-This serves as a working example of [rbac-pallet](https://github.com/ozgunozerk/substrate-node-rbac)
+This serves as a working example of [rbac-pallet](https://github.com/ozgunozerk/RBAC-pallet)
 
 # Build:
 `cargo build --release`
